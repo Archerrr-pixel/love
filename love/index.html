@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>点开看看 ❤</title>
+  <!-- 微信里分享链接时显示的标题和描述 -->
+  <meta property="og:title" content="有一份心意,想让你看看 ❤" />
+  <meta property="og:description" content="别犹豫,点进来就知道啦" />
+  <style>
+    :root {
+      --pink: #ff4d6d;
+      --pink-light: #ff8fab;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      background: linear-gradient(165deg, #1a0b2e 0%, #40125b 48%, #8c1d52 100%);
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: #fff;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 背景光斑 */
+    .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      pointer-events: none;
+      animation: glowFloat 9s ease-in-out infinite alternate;
+    }
+    .glow.g1 { width: 45vmin; height: 45vmin; background: rgba(255, 77, 109, .30); top: -8%; left: -10%; }
+    .glow.g2 { width: 40vmin; height: 40vmin; background: rgba(147, 51, 234, .28); bottom: -6%; right: -8%; animation-delay: -4s; }
+    @keyframes glowFloat {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(6vmin, 4vmin) scale(1.15); }
+    }
+
+    /* 大爱心 */
+    .heart-btn {
+      position: relative;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .heart-btn svg {
+      width: min(38vw, 150px);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 0 22px rgba(255, 77, 109, .55));
+      animation: beat 1.15s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      14% { transform: scale(1.13); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.13); }
+      70% { transform: scale(1); }
+    }
+    /* 爱心周围的光环 */
+    .heart-btn .ring {
+      position: absolute;
+      inset: -14%;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 143, 171, .4);
+      animation: ringPulse 2s ease-out infinite;
+      pointer-events: none;
+    }
+    @keyframes ringPulse {
+      0%   { transform: scale(.8); opacity: .8; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* 提示文字 */
+    #hint {
+      z-index: 2;
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, .85);
+      transition: opacity .4s;
+      animation: hintFade 1.6s ease-in-out infinite;
+    }
+    @keyframes hintFade {
+      0%, 100% { opacity: .55; }
+      50% { opacity: 1; }
+    }
+
+    /* 表白文字(点击三次后出现) */
+    #reveal {
+      z-index: 2;
+      text-align: center;
+      opacity: 0;
+      transform: scale(.6);
+      transition: opacity .8s ease, transform .8s cubic-bezier(.2, 1.4, .4, 1);
+      pointer-events: none;
+    }
+    #reveal.show { opacity: 1; transform: scale(1); }
+    #reveal .msg {
+      font-size: min(11vw, 44px);
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-shadow: 0 0 24px rgba(255, 77, 109, .8);
+      margin-bottom: 12px;
+    }
+    #reveal .sign {
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, .7);
+    }
+
+    /* 飘浮的爱心与爆裂粒子 */
+    .heart-float, .particle {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .heart-float {
+      bottom: -50px;
+      animation: rise linear forwards;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(0) translateX(0) rotate(-8deg); opacity: 0; }
+      10%  { opacity: .7; }
+      90%  { opacity: .5; }
+      100% { transform: translateY(-110vh) translateX(var(--sway, 40px)) rotate(14deg); opacity: 0; }
+    }
+    .particle {
+      animation: fly .9s ease-out forwards;
+    }
+    @keyframes fly {
+      from { transform: translate(-50%, -50%) scale(.6); opacity: 1; }
+      to   { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+
+  <!-- ============ 想改表白内容,改下面的 CONFIG ============ -->
+
+  <div class="heart-btn" id="heartBtn">
+    <div class="ring"></div>
+    <svg viewBox="0 0 24 24" aria-label="爱心">
+      <defs>
+        <linearGradient id="hg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"  stop-color="#ff8fab" />
+          <stop offset="55%" stop-color="#ff4d6d" />
+          <stop offset="100%" stop-color="#c9184a" />
+        </linearGradient>
+      </defs>
+      <path fill="url(#hg)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+  </div>
+
+  <p id="hint">点一点,有惊喜 ✨</p>
+
+  <div id="reveal">
+    <div class="msg">我喜欢你 ❤</div>
+    <div class="sign">—— 来自一个喜欢你的人</div>
+  </div>
+
+  <script>
+    // ============ 配置区:改成你想说的话 ============
+    const CONFIG = {
+      message: "我喜欢你 ❤",        // 点击三次后显示的大字
+      sign: "—— 来自一个喜欢你的人", // 下面的署名(不想署名就改成 "")
+      tapTimes: 3,                  // 需要点几次才显示
+      hints: ["点一点,有惊喜 ✨", "再点一下!", "最后一下!"] // 每次点击后的提示
+    };
+    // ================================================
+
+    const heartBtn = document.getElementById("heartBtn");
+    const hint = document.getElementById("hint");
+    const reveal = document.getElementById("reveal");
+    const floatChars = ["❤", "💖", "💕", "💗"];
+
+    reveal.querySelector(".msg").textContent = CONFIG.message;
+    reveal.querySelector(".sign").textContent = CONFIG.sign;
+
+    // ---- 背景飘浮爱心 ----
+    function spawnFloat() {
+      if (document.querySelectorAll(".heart-float").length > 14) return;
+      const el = document.createElement("span");
+      el.className = "heart-float";
+      el.textContent = floatChars[Math.floor(Math.random() * floatChars.length)];
+      el.style.left = Math.random() * 100 + "vw";
+      el.style.fontSize = (12 + Math.random() * 22) + "px";
+      el.style.setProperty("--sway", (Math.random() * 120 - 60) + "px");
+      el.style.animationDuration = (7 + Math.random() * 6) + "s";
+      el.style.opacity = 0.35 + Math.random() * 0.35;
+      document.body.appendChild(el);
+      el.addEventListener("animationend", () => el.remove());
+    }
+    setInterval(spawnFloat, 700);
+    for (let i = 0; i < 8; i++) spawnFloat();
+
+    // ---- 点击爆裂爱心 ----
+    function burst(x, y, count = 12) {
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement("span");
+        el.className = "particle";
+        el.textContent = floatChars[Math.floor(Math.random() * floatChars.length)];
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+        el.style.fontSize = (14 + Math.random() * 18) + "px";
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+        const dist = 60 + Math.random() * 90;
+        el.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+        el.style.setProperty("--dy", Math.sin(angle) * dist + "px");
+        document.body.appendChild(el);
+        el.addEventListener("animationend", () => el.remove());
+      }
+    }
+
+    // ---- 音效(小和弦,无需音频文件) ----
+    let audioCtx = null;
+    function chime(finale = false) {
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const notes = finale ? [523.25, 659.25, 783.99, 1046.5] : [659.25, 783.99];
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          const t = audioCtx.currentTime + i * (finale ? 0.12 : 0.09);
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+          osc.connect(gain).connect(audioCtx.destination);
+          osc.start(t);
+          osc.stop(t + 0.65);
+        });
+      } catch (e) { /* 浏览器不支持就静音 */ }
+    }
+
+    // ---- 点击逻辑 ----
+    let taps = 0;
+    function onTap(e) {
+      const x = e.clientX ?? innerWidth / 2;
+      const y = e.clientY ?? innerHeight / 2;
+      burst(x, y, 14);
+      taps++;
+      chime(false);
+
+      if (taps < CONFIG.tapTimes) {
+        hint.textContent = CONFIG.hints[taps] || hint.textContent;
+        return;
+      }
+
+      // 达到次数:显示表白文字
+      reveal.classList.add("show");
+      hint.style.opacity = 0;
+      chime(true);
+      // 爱心雨庆祝
+      const rain = setInterval(spawnFloat, 90);
+      setTimeout(() => clearInterval(rain), 3000);
+    }
+    document.body.addEventListener("click", onTap);
+    document.body.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      if (t) onTap({ clientX: t.clientX, clientY: t.clientY });
+    }, { passive: true });
+  </script>
+</body>
+</html>
